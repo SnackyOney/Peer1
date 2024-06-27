@@ -1,96 +1,53 @@
-#include <cassert>
-#include <filesystem>
-#include <fstream>
+#include <algorithm>
 #include <iostream>
-#include <regex>
-#include <sstream>
+#include <chrono>
 #include <string>
+#include <stdio.h>
+#include <map>
+#include <iomanip>
 #include <vector>
-
-using namespace std;
-using filesystem::path;
-
-path operator""_p(const char* data, std::size_t sz) {
-    return path(data, data + sz);
-}
-
-// напишите эту функцию
-bool Preprocess(const path& in_file, const path& out_file, const vector<path>& include_directories);
-
-string GetFileContents(string file) {
-    ifstream stream(file);
-
-    // конструируем string по двум итераторам
-    return {(istreambuf_iterator<char>(stream)), istreambuf_iterator<char>()};
-}
-
-void Test() {
-    error_code err;
-    filesystem::remove_all("sources"_p, err);
-    filesystem::create_directories("sources"_p / "include2"_p / "lib"_p, err);
-    filesystem::create_directories("sources"_p / "include1"_p, err);
-    filesystem::create_directories("sources"_p / "dir1"_p / "subdir"_p, err);
-
-    {
-        ofstream file("sources/a.cpp");
-        file << "// this comment before include\n"
-                "#include \"dir1/b.h\"\n"
-                "// text between b.h and c.h\n"
-                "#include \"dir1/d.h\"\n"
-                "\n"
-                "int SayHello() {\n"
-                "    cout << \"hello, world!\" << endl;\n"
-                "#   include<dummy.txt>\n"
-                "}\n"s;
+class People {
+  public:
+  void Read(int32_t id, int32_t pages) {
+    for(int i = id_to_pages_[id] + 1; i <= pages; ++i) {
+      ++pages_to_people_[i];
     }
-    {
-        ofstream file("sources/dir1/b.h");
-        file << "// text from b.h before include\n"
-                "#include \"subdir/c.h\"\n"
-                "// text from b.h after include"s;
+    id_to_pages_[id] = pages;
+  }
+  void Cheer(int32_t id) {
+    if (id_to_pages_[id] == 0) {
+      std::cout << 0 << '\n';
+      return;
     }
-    {
-        ofstream file("sources/dir1/subdir/c.h");
-        file << "// text from c.h before include\n"
-                "#include <std1.h>\n"
-                "// text from c.h after include\n"s;
+    if (pages_to_people_[1] == 1) {
+      std::cout << 1 << '\n';
+      return;
     }
-    {
-        ofstream file("sources/dir1/d.h");
-        file << "// text from d.h before include\n"
-                "#include \"lib/std2.h\"\n"
-                "// text from d.h after include\n"s;
-    }
-    {
-        ofstream file("sources/include1/std1.h");
-        file << "// std1\n"s;
-    }
-    {
-        ofstream file("sources/include2/lib/std2.h");
-        file << "// std2\n"s;
-    }
+    std::cout << (pages_to_people_[1] - pages_to_people_[id_to_pages_[id]]) * 1.0 / (pages_to_people_[1] - 1) << '\n';
+  }
+  private:
+  std::vector<int32_t> id_to_pages_ = std::vector(100001, 0);
+  std::vector<int32_t> pages_to_people_ = std::vector(1001, 0);
+};
 
-    assert((!Preprocess("sources"_p / "a.cpp"_p, "sources"_p / "a.in"_p,
-                                  {"sources"_p / "include1"_p,"sources"_p / "include2"_p})));
-
-    ostringstream test_out;
-    test_out << "// this comment before include\n"
-                "// text from b.h before include\n"
-                "// text from c.h before include\n"
-                "// std1\n"
-                "// text from c.h after include\n"
-                "// text from b.h after include\n"
-                "// text between b.h and c.h\n"
-                "// text from d.h before include\n"
-                "// std2\n"
-                "// text from d.h after include\n"
-                "\n"
-                "int SayHello() {\n"
-                "    cout << \"hello, world!\" << endl;\n"s;
-
-    assert(GetFileContents("sources/a.in"s) == test_out.str());
-}
-
-int main() {
-    Test();
+int main()
+{
+  std::ios_base::sync_with_stdio(false);
+  std::cin.tie(NULL);
+  People people;
+  std::string str;
+  int32_t inp_1 = 0; 
+  int32_t inp_2 = 0;
+  int32_t number = 0;
+  std::cin >> number;
+  for(int32_t i = 0; i < number; ++i) {
+    std::cin >> str >> inp_1;
+    if (str == "CHEER") {
+      people.Cheer(inp_1);
+    }
+    if (str == "READ") {
+      std::cin >> inp_2;
+      people.Read(inp_1, inp_2);
+    }
+  }
 }
